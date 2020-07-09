@@ -1,8 +1,7 @@
-import { User } from "./models/User";
+import { User } from "../models/User";
 
 export const resolvers = {
 	Query: {
-		hello: () => "hi",
 		users: () => User.find(),
 	},
 	Mutation: {
