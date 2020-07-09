@@ -1,0 +1,33 @@
+type Query {
+	hello: String!
+	users: [User!]!
+}
+type User {
+	id: ID!
+	name: String!
+	email: String!
+	age: Int
+}
+type Mutation {
+	createUser(data: CreateUser): User!
+	updateUser(id: ID!, data: UpdateUser): User!
+  deleteUser(id:ID!):User!
+}
+
+input CreateUser {
+	name: String!
+	email: String!
+	age: Int
+}
+
+input UpdateUser {
+	name: String
+	email: String
+	age: Int
+}
+
+# type Subscription {
+#     # comment(postId: ID!): CommentSubscriptionPayload!
+#     # post: PostSubscriptionPayload!
+
+# }
