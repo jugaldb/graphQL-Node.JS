@@ -1,4 +1,4 @@
-const shortid = require('shortid')
+import uuidv4 from 'uuid/v4'
 
 const Mutation = {
     createUser(parent, args, { db }, info) {
@@ -9,7 +9,7 @@ const Mutation = {
         }
 
         const user = {
-            id: shortid.generate(),
+            id: uuidv4(),
             ...args.data
         }
 
@@ -75,7 +75,7 @@ const Mutation = {
         }
 
         const post = {
-            id: shortid.generate(),
+            id: uuidv4(),
             ...args.data
         }
 
@@ -169,7 +169,7 @@ const Mutation = {
         }
 
         const comment = {
-            id: shortid.generate(),
+            id: uuidv4(),
             ...args.data
         }
 

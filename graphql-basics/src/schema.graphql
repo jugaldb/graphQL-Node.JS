@@ -84,9 +84,9 @@ type Comment {
 }
 
 enum MutationType {
-	CREATED
-	UPDATED
-	DELETED
+    CREATED
+    UPDATED
+    DELETED
 }
 
 type PostSubscriptionPayload {
