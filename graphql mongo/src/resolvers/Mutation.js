@@ -1,18 +1,23 @@
 import { User } from "../models/User";
 import { Post } from "../models/Post";
 import { Comment } from "../models/User";
+const bcrypt = require('bcrypt')
+
+
 
 const Mutation = {
 	createUser: async (_, { data }) => {
 		const emailTaken = await User.find({ email: data.email });
-		console.log(emailTaken);
 		if (emailTaken.length >= 1) {
 			throw new Error("Email already taken");
 		}
-		const { name, email, age } = data;
-		const user = new User({ name, email, age });
-		await user.save();
-		return user;
+		const { name, email, age, password } = data;
+		const hash = await bcrypt.hash(password, 12);
+		console.log(hash);
+		var user = new User({ name, email, age, password: hash });
+
+		const person = await user.save();
+		return person;
 	},
 	updateUser: async (_, { id, data }) => {
 		const user = await User.findById(id);
