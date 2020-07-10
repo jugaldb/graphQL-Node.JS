@@ -1,9 +1,9 @@
 import { User } from "../models/User";
 import { Post } from "../models/Post";
-import { Comment } from "../models/User";
-const bcrypt = require('bcrypt')
+import { Comment } from "../models/Comment";
+const bcrypt = require("bcrypt");
 
-
+import getUserId from "../utils/getUserId";
 
 const Mutation = {
 	createUser: async (_, { data }) => {
@@ -19,8 +19,9 @@ const Mutation = {
 		const person = await user.save();
 		return person;
 	},
-	updateUser: async (_, { id, data }) => {
-		const user = await User.findById(id);
+	updateUser: async (_, { data }, { request }, info) => {
+		const userId = getUserId(request);
+		const user = await User.findById(userId);
 
 		if (!user) {
 			throw new Error("User not found");
@@ -47,11 +48,12 @@ const Mutation = {
 
 		return user;
 	},
-	deleteUser: async (_, { id }) => {
-		const user = await User.findById(id);
+	deleteUser: async (_, {}, { request }) => {
+		const userId = getUserId(request);
+		const user = await User.findById(userId);
 
-        await Post.deleteMany({author:id})
-        await Comment.deleteMany({author:id})
+		await Post.deleteMany({ author: userId });
+		await Comment.deleteMany({ author: userId });
 		if (!user) {
 			throw new Error("User Doesnt Exist");
 		}
@@ -60,8 +62,10 @@ const Mutation = {
 
 		return user;
 	},
-	createPost: async (parent, args, { pubsub }, info) => {
-		const userExists = await User.find({ _id: args.data.author});
+	createPost: async (parent, args, { pubsub, request }, info) => {
+		const userId = getUserId(request);
+
+		const userExists = await User.find({ _id: userId });
 
 		if (userExists.length === 0) {
 			throw new Error("User not found");
@@ -69,6 +73,7 @@ const Mutation = {
 
 		const post = await new Post({
 			...args.data,
+			author: userId,
 		});
 
 		await post.save();
@@ -84,15 +89,19 @@ const Mutation = {
 
 		return post;
 	},
-	deletePost: async (parent, args, { pubsub }, info) => {
+	deletePost: async (parent, args, { pubsub, request }, info) => {
+		const userId = getUserId(request);
 		const post = await Post.findById(args.id);
-
 		if (!post) {
 			throw new Error("Post does not exist");
 		}
 
-        await post.remove();
-        await Comment.deleteMany({post:args.id})
+		if (post.author != userId) {
+			throw new Error("This is not your post");
+		}
+
+		await post.remove();
+		await Comment.deleteMany({ post: args.id });
 
 		if (post.published) {
 			pubsub.publish("post", {
@@ -105,14 +114,19 @@ const Mutation = {
 
 		return post;
 	},
-	updatePost: async (parent, args, { pubsub }, info) => {
+	updatePost: async (parent, args, { pubsub,request }, info) => {
 		const { id, data } = args;
 		const post = await Post.findById(id);
+		const userId = getUserId(request);
+		if (!post) {
+			throw new Error("Post does not exist");
+		}
+		if (post.author != userId) {
+			throw new Error("This is not your post");
+		}
 		const originalPost = { ...post };
 
-		if (!post) {
-			throw new Error("Post not found");
-		}
+
 
 		if (typeof data.title === "string") {
 			post.title = data.title;
@@ -153,13 +167,13 @@ const Mutation = {
 
 		return post;
 	},
-	createComment:async(parent, args, { pubsub }, info)=>{
-
-        const userExists = await User.find({ _id: args.data.author });
+	createComment: async (parent, args, { pubsub,request }, info) => {
+		const userId = getUserId(request);
+		const userExists = await User.find({ _id: userId });
 
 		if (userExists.length === 0) {
 			throw new Error("User not found");
-        }
+		}
 		const post = await Post.find({ _id: args.data.post });
 
 		if (post.length === 0) {
@@ -176,11 +190,12 @@ const Mutation = {
 
 		const comment = new Comment({
 			...args.data,
+			author :userId
 		});
 
-        // db.comments.push(comment);
-        
-        await comment.save()
+		// db.comments.push(comment);
+
+		await comment.save();
 		pubsub.publish(`comment ${args.data.post}`, {
 			comment: {
 				mutation: "CREATED",
@@ -190,21 +205,18 @@ const Mutation = {
 
 		return comment;
 	},
-	deleteComment:async(parent, args, { pubsub }, info)=>{
-        const comment = await Comment.findById(args.id)
+	deleteComment: async (parent, args, { pubsub,request }, info) => {
+		const userId = getUserId(request);
+		const comment = await Comment.findById(args.id);
 
-        if(!comment){
-            throw new Error('Not found')
-        }
-		// const commentIndex = db.comments.findIndex(
-		// 	(comment) => comment.id === args.id
-		// );
+		if (!comment) {
+			throw new Error("Not found");
+		}
+		if(comment.author!=userId){
+			throw new Error('This is not your comment')
+		}
 
-		// if (commentIndex === -1) {
-		// 	throw new Error("Comment not found");
-		// }
-
-		await comment.remove()
+		await comment.remove();
 		pubsub.publish(`comment ${comment.post}`, {
 			comment: {
 				mutation: "DELETED",
@@ -214,19 +226,22 @@ const Mutation = {
 
 		return comment;
 	},
-	updateComment:async(parent, args, { db, pubsub }, info)=>{
-        const { id, data } = args;
-        const comment = await Comment.findById(id)
-		// const comment = db.comments.find((comment) => comment.id === id);
+	updateComment: async (parent, args, { request, pubsub }, info) => {
+		const userId = getUserId(request);
+		const comment = await Comment.findById(args.id);
 
 		if (!comment) {
-			throw new Error("Comment not found");
+			throw new Error("Not found");
 		}
+		if(comment.author!=userId){
+			throw new Error('This is not your comment')
+		}
+
 
 		if (typeof data.text === "string") {
 			comment.text = data.text;
-        }
-        await comment.save()
+		}
+		await comment.save();
 
 		pubsub.publish(`comment ${comment.post}`, {
 			comment: {

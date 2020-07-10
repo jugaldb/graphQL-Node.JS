@@ -27,7 +27,7 @@ const Query = {
         if(!verify){
             throw new Error('Password is incorrect')
         }
-        const token = jwt.sign({user},process.env.JWT_SECRET,{
+        const token = jwt.sign({userId:user.id},process.env.JWT_SECRET,{
             expiresIn:'1h'
         })
         return {user,token,tokenExpiration:1}

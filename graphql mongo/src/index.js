@@ -44,10 +44,14 @@ const server = new GraphQLServer({
     Post,
     Subscription
   },    
-  context: {
-    pubsub
-}
+  context(request) {
+    return {
+        pubsub,
+        request
+    }
+  }
 })
+
 
 server.start( () => console.log(`🚀 Server ready at http://localhost:4000`))
 
