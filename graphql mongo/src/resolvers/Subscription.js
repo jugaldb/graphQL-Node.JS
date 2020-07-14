@@ -6,6 +6,7 @@ import getUserId from "../utils/getUserId";
 const Subscription = {
 	comment: {
 		subscribe(parent, { postId }, { db, pubsub, request }, info) {
+			const userId = getUserId(request)
 			const post = Post.findById(postId);
 			// const userId = getUserId(request)
 
