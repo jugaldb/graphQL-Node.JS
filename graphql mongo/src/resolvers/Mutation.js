@@ -114,7 +114,7 @@ const Mutation = {
 
 		return post;
 	},
-	updatePost: async (parent, args, { pubsub,request }, info) => {
+	updatePost: async (parent, args, { pubsub, request }, info) => {
 		const { id, data } = args;
 		const post = await Post.findById(id);
 		const userId = getUserId(request);
@@ -125,8 +125,6 @@ const Mutation = {
 			throw new Error("This is not your post");
 		}
 		const originalPost = { ...post };
-
-
 
 		if (typeof data.title === "string") {
 			post.title = data.title;
@@ -167,7 +165,7 @@ const Mutation = {
 
 		return post;
 	},
-	createComment: async (parent, args, { pubsub,request }, info) => {
+	createComment: async (parent, args, { pubsub, request }, info) => {
 		const userId = getUserId(request);
 		const userExists = await User.find({ _id: userId });
 
@@ -190,7 +188,7 @@ const Mutation = {
 
 		const comment = new Comment({
 			...args.data,
-			author :userId
+			author: userId,
 		});
 
 		// db.comments.push(comment);
@@ -205,15 +203,15 @@ const Mutation = {
 
 		return comment;
 	},
-	deleteComment: async (parent, args, { pubsub,request }, info) => {
+	deleteComment: async (parent, args, { pubsub, request }, info) => {
 		const userId = getUserId(request);
 		const comment = await Comment.findById(args.id);
 
 		if (!comment) {
 			throw new Error("Not found");
 		}
-		if(comment.author!=userId){
-			throw new Error('This is not your comment')
+		if (comment.author != userId) {
+			throw new Error("This is not your comment");
 		}
 
 		await comment.remove();
@@ -233,10 +231,9 @@ const Mutation = {
 		if (!comment) {
 			throw new Error("Not found");
 		}
-		if(comment.author!=userId){
-			throw new Error('This is not your comment')
+		if (comment.author != userId) {
+			throw new Error("This is not your comment");
 		}
-
 
 		if (typeof data.text === "string") {
 			comment.text = data.text;
