@@ -57,6 +57,8 @@ const Mutation = {
             user.email = data.email
         }
 
+
+        
         if (typeof data.name === 'string') {
             user.name = data.name
         }
